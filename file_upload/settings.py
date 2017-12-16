@@ -21,10 +21,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '8)^p1_p&+r2sz2rr_07c$_zhz2-+q(63jo#!&y7ium3l-%=+zw'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+CORS_ORIGIN_ALLOW_ALL = True
 
-ALLOWED_HOSTS = []
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = False
+
+ALLOWED_HOSTS = ['whydnt-test-189218.appspot.com']
 
 # Application definition
 
@@ -34,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'appengine_toolkit',
     'corsheaders',
     'rest_framework',
     'file_upload_api.apps.FileUploadApiConfig',
@@ -43,18 +46,14 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
 ]
-
-CORS_ORIGIN_WHITELIST = (
-    'localhost:4200',
-)
 
 ROOT_URLCONF = 'file_upload.urls'
 
@@ -78,14 +77,50 @@ TEMPLATES = [
 WSGI_APPLICATION = 'file_upload.wsgi.application'
 
 # Database
-# https://docs.djangoproject.com/en/dev/ref/settings/#databases
+# https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+# Check to see if MySQLdb is available; if not, have pymysql masquerade as
+# MySQLdb. This is a convenience feature for developers who cannot install
+# MySQLdb locally; when running in production on Google App Engine Standard
+# Environment, MySQLdb will be used.
+try:
+    import MySQLdb  # noqa: F401
+except ImportError:
+    import pymysql
+
+    pymysql.install_as_MySQLdb()
+
+# [START db_setup]
+if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
+    # Running on production App Engine, so connect to Google Cloud SQL using
+    # the unix socket at /cloudsql/<your-cloudsql-connection string>
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'HOST': '/cloudsql/<connection>',
+            'NAME': 'images',
+            'USER': 'root',
+            'PASSWORD': 'pass',
+        }
     }
-}
+else:
+    # Running locally so connect to either a local MySQL instance or connect to
+    # Cloud SQL via the proxy. To start the proxy via command line:
+    #
+    #     $ cloud_sql_proxy -instances=[INSTANCE_CONNECTION_NAME]=tcp:3306
+    #
+    # See https://cloud.google.com/sql/docs/mysql-connect-proxy
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'HOST': '127.0.0.1',
+            'PORT': '3306',
+            'NAME': 'images',
+            'USER': 'root',
+            'PASSWORD': 'pass',
+        }
+    }
+# [END db_setup]
 
 # Password validation
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
@@ -124,3 +159,4 @@ USE_TZ = True
 STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'uploaded_images')
 MEDIA_URL = '/images/'
+STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')

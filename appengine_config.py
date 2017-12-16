@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import sys
+# [START vendor]
+from google.appengine.ext import vendor
 
-if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "file_upload.settings")
+vendor.add('lib')
+# [END vendor]
 
-    from django.core.management import execute_from_command_line
-
-    execute_from_command_line(sys.argv)
