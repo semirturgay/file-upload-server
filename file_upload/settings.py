@@ -26,7 +26,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['whydnt-test-189218.appspot.com']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -36,8 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'appengine_toolkit',
     'corsheaders',
+    'appengine_toolkit',
     'rest_framework',
     'file_upload_api.apps.FileUploadApiConfig',
     'file_upload_rest',
@@ -97,27 +97,17 @@ if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'HOST': '/cloudsql/<connection>',
+            'HOST': '/cloudsql/<removed_for_security>',
             'NAME': 'images',
             'USER': 'root',
             'PASSWORD': 'pass',
         }
     }
 else:
-    # Running locally so connect to either a local MySQL instance or connect to
-    # Cloud SQL via the proxy. To start the proxy via command line:
-    #
-    #     $ cloud_sql_proxy -instances=[INSTANCE_CONNECTION_NAME]=tcp:3306
-    #
-    # See https://cloud.google.com/sql/docs/mysql-connect-proxy
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'HOST': '127.0.0.1',
-            'PORT': '3306',
-            'NAME': 'images',
-            'USER': 'root',
-            'PASSWORD': 'pass',
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
 # [END db_setup]
@@ -153,8 +143,11 @@ USE_L10N = True
 
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/dev/howto/static-files/
+APPENGINE_TOOLKIT = {
+    'BUCKET_NAME': 'media_upload',
+}
+
+DEFAULT_FILE_STORAGE = 'appengine_toolkit.storage.GoogleCloudStorage'
 
 STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'uploaded_images')
